@@ -31,11 +31,11 @@ func main() {
 
 	logger := logrus.New()
 	// prep logger
-	llev, err := logrus.ParseLevel(cfg.logLevel)
+	lvl, err := logrus.ParseLevel(cfg.logLevel)
 	if err != nil {
 		logrus.Fatalf("cannot set LOG_LEVEL to %q", cfg.logLevel)
 	}
-	logger.SetLevel(llev)
+	logger.SetLevel(lvl)
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
 	fsStore, err := fs.New(cfg.dbFile, logger, cfg.maxVersions)
@@ -54,7 +54,6 @@ func main() {
 	http.HandleFunc("/", rec.CaptureEvents)
 	http.HandleFunc("/health", ServeHealth)
 	http.HandleFunc("/events", rec.ListEvents)
-	http.HandleFunc("/diff", rec.DiffEvents)
 
 	logger.Printf("Listening on port %s", cfg.listenAddr)
 	logger.Fatal(http.ListenAndServeTLS(cfg.listenAddr, cfg.certFile, cfg.keyFile, nil))

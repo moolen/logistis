@@ -23,7 +23,7 @@ spec:
         - image: simple-kubernetes-webhook:latest
           imagePullPolicy: Never
           name: simple-kubernetes-webhook
-          command: ["admission-webhook"]
+          command: ["logistis"]
           args:
           - -cert-file
           - /etc/admission-webhook/tls/tls.crt

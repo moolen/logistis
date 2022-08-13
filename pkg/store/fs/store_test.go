@@ -24,29 +24,43 @@ func TestStore(t *testing.T) {
 	defer st.Close()
 
 	namespaces := []string{"kube-system", "default", "example"}
+	kinds := []string{"Deployment", "Statefulset", "DaemonSet"}
+	names := []string{"foo", "bar", "coredns"}
 
 	for _, ns := range namespaces {
-		for i := 0; i < 100; i++ {
-			err = st.Observe(&store.Event{
-				ID:        uuid.New().String(),
-				Group:     "apps",
-				Kind:      "Deployment",
-				Namespace: ns,
-				Name:      "coredns",
-				Timestamp: time.Now(),
-			})
-			if err != nil {
-				t.Error(err)
+		for _, kind := range kinds {
+			for _, name := range names {
+				for i := 0; i < 100; i++ {
+					err = st.Observe(&store.Event{
+						ID:        uuid.New().String(),
+						Group:     "noop",
+						Kind:      kind,
+						Namespace: ns,
+						Name:      name,
+						Timestamp: time.Now(),
+					})
+					if err != nil {
+						t.Error(err)
+					}
+				}
 			}
 		}
 	}
 
-	events, err := st.List("kube-system")
+	events, err := st.List("kube-system", "Deployment", "", 3)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if len(events["kube-system/apps/Deployment/coredns"]) != 100 {
+	t.Logf("events: %#v", events)
+	if len(events["kube-system/Deployment/coredns"]) != 3 {
 		t.Fail()
 	}
+	if len(events["default/Deployment/coredns"]) != 3 {
+		t.Fail()
+	}
+	if len(events["example/Deployment/coredns"]) != 3 {
+		t.Fail()
+	}
+	t.Fail()
 }

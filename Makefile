@@ -5,8 +5,12 @@ GOARCH=$(go env GOARCH)
 test:
 	go test ./...
 
-.PHONY: build
-build:
+.PHONY: build-cli
+build-cli:
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o bin/kubectl-blame ./cmd/kubectl-blame
+
+.PHONY: build-webhook
+build-webhook:
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o bin/admission-webhook ./cmd/webhook
 
 .PHONY: docker-build

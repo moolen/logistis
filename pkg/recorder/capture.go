@@ -22,7 +22,7 @@ func (a *Recorder) RecordEvent(request *admissionv1.AdmissionRequest) (*admissio
 		Namespace: request.Namespace,
 		Name:      request.Name,
 		Operation: string(request.Operation),
-		UserInfo:  request.UserInfo.String(),
+		UserInfo:  request.UserInfo,
 		Object:    request.Object.Raw,
 		OldObject: request.OldObject.Raw,
 		Timestamp: time.Now(),

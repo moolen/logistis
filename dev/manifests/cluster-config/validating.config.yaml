@@ -4,11 +4,12 @@ metadata:
   name: "simple-kubernetes-webhook.acme.com"
 webhooks:
   - name: "simple-kubernetes-webhook.acme.com"
+    failurePolicy: Ignore
     rules:
       - apiGroups: ["", "apps"]
         apiVersions: ["v1"]
         operations: ["*"]
-        resources: ["pods", "deployments", "statefulsets"]
+        resources: ["deployments", "statefulsets", "configmaps", "secrets"]
         scope: "*"
     clientConfig:
       service:
