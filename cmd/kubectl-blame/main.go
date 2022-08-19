@@ -40,7 +40,7 @@ func main() {
 	flag.StringVar(&cfg.targetNamespace, "target-namespace", "", "target namespace to pull events from")
 	flag.StringVar(&cfg.targetKind, "target-kind", "", "target kind to pull events from. target-namespace must be defined.")
 	flag.StringVar(&cfg.targetName, "target-name", "", "target name to pull events from. target-namespace amd target-kind must be defined.")
-	flag.StringVar(&cfg.podSelector, "pod-selector", "app=simple-kubernetes-webhook", "pod selector")
+	flag.StringVar(&cfg.podSelector, "pod-selector", "app=logistis", "pod selector")
 	flag.StringVar(&cfg.logLevel, "loglevel", "info", "")
 	flag.StringVar(&cfg.kubeconfig, "kubeconfig", filepath.Join(home, ".kube", "config"), "path to kubeconfig file")
 	flag.StringVar(&cfg.format, "format", "patch", "show `patch` or `diff`")

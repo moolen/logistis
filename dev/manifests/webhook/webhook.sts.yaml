@@ -1,39 +1,45 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  labels:
-    app: simple-kubernetes-webhook
-  name: simple-kubernetes-webhook
-  namespace: default
+  name: logistis
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: simple-kubernetes-webhook
+      app: logistis
+  serviceName: logistis
+  replicas: 1
   template:
     metadata:
       labels:
-        app: simple-kubernetes-webhook
+        app: logistis
     spec:
-      tolerations:
-        - key: acme.com/lifespan-remaining
-          operator: Exists
-          effect: NoSchedule
       containers:
         - image: simple-kubernetes-webhook:latest
-          imagePullPolicy: Never
-          name: simple-kubernetes-webhook
+          imagePullPolicy: Always
+          name: logistis
           command: ["logistis"]
           args:
           - -cert-file
           - /etc/admission-webhook/tls/tls.crt
           - -key-file
           - /etc/admission-webhook/tls/tls.key
+          - -db
+          - /data/logistis
           volumeMounts:
             - name: tls
               mountPath: "/etc/admission-webhook/tls"
               readOnly: true
+            - name: logistis-vol
+              mountPath: "/data"
       volumes:
         - name: tls
           secret:
-            secretName: simple-kubernetes-webhook-tls
+            secretName: logistis-tls
+  volumeClaimTemplates:
+  - metadata:
+      name: logistis-vol
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

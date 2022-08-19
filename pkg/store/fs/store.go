@@ -1,6 +1,8 @@
 package fs
 
 import (
+	"strings"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/moolen/logistis/pkg/store"
 	"github.com/sirupsen/logrus"
@@ -61,9 +63,12 @@ func (s *Store) List(namespace, kind, name string, maxHistory int) (map[string][
 		for nsit.Seek(prefix); nsit.Valid(); nsit.Next() {
 			item := nsit.Item()
 			k := item.Key()
-			s.logger.Debugf("iterating over %s\n", string(k))
 			if _, ok := historyMap[string(k)]; !ok {
 				historyMap[string(k)] = 0
+			}
+			// skip if prefix doesn't match
+			if !strings.HasPrefix(string(k), namespace) {
+				continue
 			}
 			err := item.Value(func(v []byte) error {
 				if historyMap[string(k)] >= maxHistory {

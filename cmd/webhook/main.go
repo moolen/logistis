@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/moolen/logistis/pkg/recorder"
 	"github.com/moolen/logistis/pkg/store/fs"
@@ -25,8 +28,8 @@ func main() {
 	flag.StringVar(&cfg.certFile, "cert-file", "", "path to TLS certificate file")
 	flag.StringVar(&cfg.keyFile, "key-file", "", "path to TLS private key file")
 	flag.StringVar(&cfg.logLevel, "log-level", "debug", "")
-	flag.StringVar(&cfg.dbFile, "db", "/tmp/logistis", "path to database file")
-	flag.IntVar(&cfg.maxVersions, "max-versions", 100, "number of max versions to keep per entry")
+	flag.StringVar(&cfg.dbFile, "db", "/data/logistis", "path to database file")
+	flag.IntVar(&cfg.maxVersions, "max-versions", 10, "number of max versions to keep per entry")
 	flag.Parse()
 
 	logger := logrus.New()
@@ -54,9 +57,26 @@ func main() {
 	http.HandleFunc("/", rec.CaptureEvents)
 	http.HandleFunc("/health", ServeHealth)
 	http.HandleFunc("/events", rec.ListEvents)
-
 	logger.Printf("Listening on port %s", cfg.listenAddr)
-	logger.Fatal(http.ListenAndServeTLS(cfg.listenAddr, cfg.certFile, cfg.keyFile, nil))
+
+	server := &http.Server{Addr: cfg.listenAddr, Handler: nil}
+
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		<-sigc
+		logger.Info("received shutdown signal")
+		err = server.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+	}()
+
+	server.ListenAndServeTLS(cfg.certFile, cfg.keyFile)
 }
 
 // ServeHealth returns 200 when things are good
