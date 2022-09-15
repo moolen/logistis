@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/moolen/logistis/pkg/store"
-	"github.com/sirupsen/logrus"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -32,7 +31,7 @@ func (a *Recorder) RecordEvent(request *admissionv1.AdmissionRequest) (*admissio
 
 // CaptureEvents captures incoming events
 func (a *Recorder) CaptureEvents(w http.ResponseWriter, r *http.Request) {
-	logger := logrus.WithField("uri", r.RequestURI)
+	logger := a.Logger.WithField("uri", r.RequestURI)
 	logger.Debug("received validation request")
 
 	in, err := parseRequest(*r)
@@ -41,13 +40,21 @@ func (a *Recorder) CaptureEvents(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	logger.Debugf("requesting user %#v", in.Request.UserInfo)
 
-	out, err := a.RecordEvent(in.Request)
-	if err != nil {
-		e := fmt.Sprintf("could not generate admission response: %v", err)
-		logger.Error(e)
-		http.Error(w, e, http.StatusInternalServerError)
-		return
+	var out *admissionv1.AdmissionReview
+	if a.match.Match(in.Request) {
+		logger.Debugf("request matched, storing info")
+		out, err = a.RecordEvent(in.Request)
+		if err != nil {
+			e := fmt.Sprintf("could not generate admission response: %v", err)
+			logger.Error(e)
+			http.Error(w, e, http.StatusInternalServerError)
+			return
+		}
+	} else {
+		logger.Debugf("does not match, skipping")
+		out = reviewResponse(in.Request.UID, true, http.StatusAccepted, "", nil)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

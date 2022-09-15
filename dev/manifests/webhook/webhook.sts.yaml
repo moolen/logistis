@@ -14,11 +14,13 @@ spec:
         app: logistis
     spec:
       containers:
-        - image: simple-kubernetes-webhook:latest
-          imagePullPolicy: Always
+        - image: logistis:latest
+          imagePullPolicy: IfNotPresent
           name: logistis
           command: ["logistis"]
           args:
+          - --match-user
+          - kubernetes-admin
           - -cert-file
           - /etc/admission-webhook/tls/tls.crt
           - -key-file

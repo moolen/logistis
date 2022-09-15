@@ -8,11 +8,13 @@ import (
 type Recorder struct {
 	Logger *logrus.Logger
 	store  store.Store
+	match  *MatchConfig
 }
 
-func New(logger *logrus.Logger, db store.Store) (*Recorder, error) {
+func New(logger *logrus.Logger, db store.Store, match *MatchConfig) (*Recorder, error) {
 	return &Recorder{
 		Logger: logger,
 		store:  db,
+		match:  match,
 	}, nil
 }

@@ -1,12 +1,14 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+
+	"github.com/namsral/flag"
 
 	"github.com/moolen/logistis/pkg/recorder"
 	"github.com/moolen/logistis/pkg/store/fs"
@@ -14,12 +16,15 @@ import (
 )
 
 type Config struct {
-	listenAddr  string
-	certFile    string
-	keyFile     string
-	logLevel    string
-	dbFile      string
-	maxVersions int
+	listenAddr     string
+	certFile       string
+	keyFile        string
+	logLevel       string
+	matchUser      string
+	matchGroup     string
+	matchUserExtra Pair
+	dbFile         string
+	maxVersions    int
 }
 
 func main() {
@@ -28,6 +33,9 @@ func main() {
 	flag.StringVar(&cfg.certFile, "cert-file", "", "path to TLS certificate file")
 	flag.StringVar(&cfg.keyFile, "key-file", "", "path to TLS private key file")
 	flag.StringVar(&cfg.logLevel, "log-level", "debug", "")
+	flag.StringVar(&cfg.matchUser, "match-user", "", "match user name")
+	flag.StringVar(&cfg.matchGroup, "match-group", "", "match user group")
+	flag.Var(&cfg.matchUserExtra, "match-user-extra", "match user extra key/value pairs")
 	flag.StringVar(&cfg.dbFile, "db", "/data/logistis", "path to database file")
 	flag.IntVar(&cfg.maxVersions, "max-versions", 10, "number of max versions to keep per entry")
 	flag.Parse()
@@ -48,7 +56,9 @@ func main() {
 
 	defer fsStore.Close()
 
-	rec, err := recorder.New(logger, fsStore)
+	logger.Debugf("found matching config: user=%q group=%q extra=%#v", cfg.matchUser, cfg.matchGroup, cfg.matchUserExtra.Value)
+	matcher := recorder.MustNewMatchConfig(cfg.matchUser, cfg.matchGroup, cfg.matchUserExtra.Value)
+	rec, err := recorder.New(logger, fsStore, matcher)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -83,4 +93,20 @@ func main() {
 func ServeHealth(w http.ResponseWriter, r *http.Request) {
 	logrus.WithField("uri", r.RequestURI).Debug("healthy")
 	fmt.Fprint(w, "OK")
+}
+
+type Pair struct {
+	Value map[string]string
+}
+
+func (p Pair) String() string {
+	return fmt.Sprintf("%#v", p.Value)
+}
+func (p Pair) Set(in string) error {
+	if p.Value == nil {
+		p.Value = make(map[string]string)
+	}
+	pairs := strings.Split(strings.Trim(in, " "), "=")
+	p.Value[strings.Trim(pairs[0], " ")] = strings.Trim(pairs[1], " ")
+	return nil
 }

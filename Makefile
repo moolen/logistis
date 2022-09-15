@@ -15,7 +15,7 @@ build-webhook:
 
 .PHONY: docker-build
 docker-build:
-	docker build -t simple-kubernetes-webhook:latest .
+	docker build -t logistis:latest .
 
 .PHONY: cluster
 cluster:
@@ -27,7 +27,7 @@ delete-cluster:
 
 .PHONY: push
 push: docker-build
-	kind load docker-image --name external-secrets simple-kubernetes-webhook:latest
+	kind load docker-image --name external-secrets logistis:latest
 
 .PHONY: deploy-config
 deploy-config:
@@ -45,10 +45,10 @@ deploy: push delete deploy-config
 delete:
 	kubectl delete -f dev/manifests/webhook/ || true
 
-.PHONY: pod
-pod:
-	kubectl apply -f dev/manifests/pods/lifespan-seven.pod.yaml
+.PHONY: example
+example:
+	kubectl apply -f dev/manifests/pods/deploy.yaml
 
-.PHONY: delete-pod
-delete-pod:
-	kubectl delete -f dev/manifests/pods/lifespan-seven.pod.yaml --force
+.PHONY: delete-example
+delete-example:
+	kubectl delete -f dev/manifests/pods/deploy.yaml --force

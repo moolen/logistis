@@ -2,14 +2,17 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/moolen/logistis/pkg/cmd/blame"
 	"github.com/moolen/logistis/pkg/formatter"
 	"github.com/sirupsen/logrus"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -101,11 +104,29 @@ func main() {
 			t.AppendRow([]interface{}{
 				key,
 				ev.Operation,
-				ev.UserInfo.Username,
+				formatUser(ev.UserInfo),
 				ev.Timestamp.Format(time.RFC3339),
 				formattedText})
 			t.AppendSeparator()
 		}
 	}
 	t.Render()
+}
+
+func formatUser(userInfo authenticationv1.UserInfo) string {
+	out := userInfo.Username + "\n"
+	if len(userInfo.Groups) > 0 {
+		out += "groups:\n"
+		for _, g := range userInfo.Groups {
+			out += "- " + g + "\n"
+		}
+	}
+	if len(userInfo.Extra) > 0 {
+		out += "extra:\n"
+		for k, vals := range userInfo.Extra {
+			out += fmt.Sprintf("%s=%s\n", k, strings.Join(vals, ","))
+		}
+
+	}
+	return out
 }
