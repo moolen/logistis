@@ -107,3 +107,23 @@ kubectl blame --target-namespace=default --format=diff
 |                          |           |                  |                      |                                                                |
 +--------------------------+-----------+------------------+----------------------+----------------------------------------------------------------+
 ```
+
+### Custom Base Image
+
+Build with your own custom image with a custom Makefile:
+
+```Makefile
+# .local/Makefile
+
+IMAGE_REPO := custom.acme.org/logistis
+IMAGE_TAG := v0.0.0-dev
+
+DOCKER_BUILD_ARGS := --load \
+	--build-arg BASEIMAGE=custom.acme.org/golang:xyz \
+	--build-arg RUNIMAGE=custom.acme.org/alpine:xyz
+
+export
+
+.DEFAULT:
+	make -C ../ $@
+```

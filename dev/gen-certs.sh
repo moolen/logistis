@@ -1,4 +1,7 @@
 #!/bin/bash
+set -euo pipefail
+
+SERVICE_NAME=${1}
 
 openssl genrsa -out ca.key 2048
 
@@ -11,22 +14,14 @@ openssl req -newkey rsa:2048 -nodes -keyout server.key \
   -out server.csr
 
 openssl x509 -req \
-  -extfile <(printf "subjectAltName=DNS:logistis.default.svc") \
+  -extfile <(printf "subjectAltName=DNS:$SERVICE_NAME") \
   -days 365 \
   -in server.csr \
   -CA ca.crt -CAkey ca.key -CAcreateserial \
   -out server.crt
 
-echo
-echo ">> Generating kube secrets..."
-kubectl create secret tls logistis-tls \
-  --cert=server.crt \
-  --key=server.key \
-  --dry-run=client -o yaml \
-  > ./manifests/webhook/webhook.tls.secret.yaml
-
-echo
-echo ">> MutatingWebhookConfiguration caBundle:"
-cat ca.crt | base64
+yq -i e ".tls.cert=\"$(cat ./server.crt | base64)\"" ./dev/values.dev.yaml
+yq -i e ".tls.key=\"$(cat ./server.key  | base64)\"" ./dev/values.dev.yaml
+yq -i e ".tls.ca=\"$(cat ./ca.crt       | base64)\"" ./dev/values.dev.yaml
 
 rm ca.crt ca.key ca.srl server.crt server.csr server.key

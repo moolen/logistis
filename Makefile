@@ -1,5 +1,21 @@
-GOOS=$(go env GOOS)
-GOARCH=$(go env GOARCH)
+GOOS=$(shell go env GOOS)
+GOARCH=$(shell go env GOARCH)
+
+# check if there are any existing `git tag` values
+ifeq ($(shell git tag),)
+# no tags found - default to initial tag `v0.0.0`
+export VERSION := $(shell echo "v0.0.0-$$(git rev-list HEAD --count)-g$$(git describe --dirty --always)" | sed 's/-/./2' | sed 's/-/./2')
+else
+# use tags
+export VERSION := $(shell git describe --dirty --always --tags --exclude 'helm*' | sed 's/-/./2' | sed 's/-/./2')
+endif
+
+DOCKER_BUILD_ARGS ?=
+DOCKERFILE := Dockerfile
+IMAGE_REPO := logistis
+IMAGE_TAG := $(VERSION)
+ARCH := $(shell go env GOARCH)
+PLATFORM := linux/$(ARCH)
 
 .PHONY: test
 test:
@@ -13,10 +29,18 @@ build-cli:
 build-webhook:
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o bin/admission-webhook ./cmd/webhook
 
-.PHONY: docker-build
-docker-build:
-	docker build -t logistis:latest .
+.PHONY: docker.build
+docker.build:
+	docker buildx build \
+		--platform $(PLATFORM) \
+		$(DOCKER_BUILD_ARGS) \
+		-t $(IMAGE_REPO):$(IMAGE_TAG) .
 
+.PHONY: docker.push.kind
+docker.push.kind:
+	kind load docker-image --name kind $(IMAGE_REPO):$(IMAGE_TAG)
+
+# ---- local development
 .PHONY: cluster
 cluster:
 	kind create cluster
@@ -25,30 +49,22 @@ cluster:
 delete-cluster:
 	kind delete cluster
 
-.PHONY: push
-push: docker-build
-	kind load docker-image --name external-secrets logistis:latest
-
-.PHONY: deploy-config
-deploy-config:
-	kubectl apply -f dev/manifests/cluster-config/
-
-.PHONY: delete-config
-delete-config:
-	kubectl delete -f dev/manifests/cluster-config/
+.PHONY: gen-tls
+gen-tls:
+	./dev/gen-certs.sh logistis.default.svc
 
 .PHONY: deploy
-deploy: push delete deploy-config
-	kubectl apply -f dev/manifests/webhook/
+deploy: gen-tls docker.build docker.push.kind
+	helm upgrade --install logistis ./chart/logistis \
+		--values ./dev/values.dev.yaml \
+		--wait
 
-.PHONY: delete
-delete:
-	kubectl delete -f dev/manifests/webhook/ || true
-
+# -------
+# EXAMPLES
 .PHONY: example
 example:
-	kubectl apply -f dev/manifests/pods/deploy.yaml
+	kubectl apply -f dev/deploy.yaml
 
 .PHONY: delete-example
 delete-example:
-	kubectl delete -f dev/manifests/pods/deploy.yaml --force
+	kubectl delete -f dev/deploy.yaml --force

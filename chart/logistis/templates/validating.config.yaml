@@ -1,0 +1,23 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "{{ include "logistis.fullname" . }}"
+webhooks:
+  - name: "{{ include "logistis.fullname" . }}.capture.svc"
+    failurePolicy: Ignore
+    rules:
+      - apiGroups: ["", "apps"]
+        apiVersions: ["v1"]
+        operations: ["*"]
+        resources: ["deployments", "statefulsets", "configmaps", "secrets"]
+        scope: "*"
+    clientConfig:
+      service:
+        namespace: {{ .Release.Namespace }}
+        name: "{{ include "logistis.fullname" . }}"
+        path: /
+        port: {{ .Values.service.port }}
+      caBundle: {{ .Values.tls.cert  }}
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    timeoutSeconds: 2

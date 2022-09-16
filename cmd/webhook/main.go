@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/namsral/flag"
 
 	"github.com/moolen/logistis/pkg/recorder"
+	"github.com/moolen/logistis/pkg/server"
 	"github.com/moolen/logistis/pkg/store/fs"
 	"github.com/sirupsen/logrus"
 )
@@ -64,12 +64,8 @@ func main() {
 	}
 
 	// handle our core application
-	http.HandleFunc("/", rec.CaptureEvents)
-	http.HandleFunc("/health", ServeHealth)
-	http.HandleFunc("/events", rec.ListEvents)
 	logger.Printf("Listening on port %s", cfg.listenAddr)
-
-	server := &http.Server{Addr: cfg.listenAddr, Handler: nil}
+	srv := server.New(rec, cfg.listenAddr, cfg.certFile, cfg.keyFile)
 
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,
@@ -80,19 +76,17 @@ func main() {
 	go func() {
 		<-sigc
 		logger.Info("received shutdown signal")
-		err = server.Close()
+		err = srv.Close()
 		if err != nil {
 			logger.Error(err)
 		}
 	}()
 
-	server.ListenAndServeTLS(cfg.certFile, cfg.keyFile)
-}
-
-// ServeHealth returns 200 when things are good
-func ServeHealth(w http.ResponseWriter, r *http.Request) {
-	logrus.WithField("uri", r.RequestURI).Debug("healthy")
-	fmt.Fprint(w, "OK")
+	err = srv.Listen()
+	if err != nil {
+		logger.Error(err)
+	}
+	logger.Info("shutdown complete")
 }
 
 type Pair struct {

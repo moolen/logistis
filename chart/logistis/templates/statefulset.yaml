@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "{{ include "logistis.fullname" . }}"
+  labels:
+    {{- include "logistis.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "logistis.selectorLabels" . | nindent 6 }}
+  serviceName: logistis
+  replicas: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "logistis.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "logistis.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          name: logistis
+          command: ["logistis"]
+          args:
+          - --match-user
+          - kubernetes-admin
+          - -cert-file
+          - /etc/admission-webhook/tls/tls.crt
+          - -key-file
+          - /etc/admission-webhook/tls/tls.key
+          - -db
+          - /data/logistis
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 10250
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          volumeMounts:
+            - name: tls
+              mountPath: "/etc/admission-webhook/tls"
+              readOnly: true
+            - name: logistis-vol
+              mountPath: "/data"
+      volumes:
+        - name: tls
+          secret:
+            secretName: "{{ include "logistis.fullname" . }}-tls"
+  volumeClaimTemplates:
+  - metadata:
+      name: logistis-vol
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
