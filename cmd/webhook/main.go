@@ -32,7 +32,7 @@ func main() {
 	flag.StringVar(&cfg.listenAddr, "listen", ":10250", "address/port to listen on")
 	flag.StringVar(&cfg.certFile, "cert-file", "", "path to TLS certificate file")
 	flag.StringVar(&cfg.keyFile, "key-file", "", "path to TLS private key file")
-	flag.StringVar(&cfg.logLevel, "log-level", "debug", "")
+	flag.StringVar(&cfg.logLevel, "loglevel", "debug", "")
 	flag.StringVar(&cfg.matchUser, "match-user", "", "match user name")
 	flag.StringVar(&cfg.matchGroup, "match-group", "", "match user group")
 	flag.Var(&cfg.matchUserExtra, "match-user-extra", "match user extra key/value pairs")

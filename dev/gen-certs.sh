@@ -20,8 +20,8 @@ openssl x509 -req \
   -CA ca.crt -CAkey ca.key -CAcreateserial \
   -out server.crt
 
-yq -i e ".tls.cert=\"$(cat ./server.crt | base64)\"" ./dev/values.dev.yaml
-yq -i e ".tls.key=\"$(cat ./server.key  | base64)\"" ./dev/values.dev.yaml
-yq -i e ".tls.ca=\"$(cat ./ca.crt       | base64)\"" ./dev/values.dev.yaml
+yq -i e ".tls.cert=\"$(cat ./server.crt | base64 -w0)\"" ./dev/values.dev.yaml
+yq -i e ".tls.key=\"$(cat ./server.key  | base64 -w0)\"" ./dev/values.dev.yaml
+yq -i e ".tls.ca=\"$(cat ./ca.crt       | base64 -w0)\"" ./dev/values.dev.yaml
 
 rm ca.crt ca.key ca.srl server.crt server.csr server.key

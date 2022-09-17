@@ -3,6 +3,7 @@ package store
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -27,7 +28,7 @@ type Event struct {
 }
 
 func (e Event) Key() []byte {
-	return []byte(fmt.Sprintf("%s/%s/%s", e.Namespace, e.Kind, e.Name))
+	return []byte(fmt.Sprintf("%s/%s/%s", strings.ToLower(e.Namespace), strings.ToLower(e.Kind), strings.ToLower(e.Name)))
 }
 
 func (e Event) Marshal() ([]byte, error) {

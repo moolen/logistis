@@ -30,7 +30,7 @@ func TestStore(t *testing.T) {
 	for _, ns := range namespaces {
 		for _, kind := range kinds {
 			for _, name := range names {
-				for i := 0; i < 100; i++ {
+				for i := 0; i < 5; i++ {
 					err = st.Observe(&store.Event{
 						ID:        uuid.New().String(),
 						Group:     "noop",
@@ -47,19 +47,19 @@ func TestStore(t *testing.T) {
 		}
 	}
 
-	events, err := st.List("kube-system", "Deployment", "", 3)
+	events, err := st.List("kube-system", "deployment", "", 3)
 	if err != nil {
 		t.Error(err)
 	}
 
 	t.Logf("events: %#v", events)
-	if len(events["kube-system/Deployment/coredns"]) != 3 {
+	if len(events["kube-system/deployment/coredns"]) != 3 {
 		t.Fail()
 	}
-	if len(events["default/Deployment/coredns"]) != 3 {
+	if len(events["default/deployment/coredns"]) != 3 {
 		t.Fail()
 	}
-	if len(events["example/Deployment/coredns"]) != 3 {
+	if len(events["example/deployment/coredns"]) != 3 {
 		t.Fail()
 	}
 	t.Fail()

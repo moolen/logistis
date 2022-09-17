@@ -32,7 +32,7 @@ $ make deploy
 # blame with `patch`
 
 ```
-kubectl blame --target-namespace=default
+kubectl blame deployment
 +--------------------------+-----------+------------------+----------------------+---------------------------------------------------------------------+
 | KEY                      | OPERATION | USER             | TIME                 | PATCH                                                               |
 +--------------------------+-----------+------------------+----------------------+---------------------------------------------------------------------+
@@ -50,62 +50,75 @@ kubectl blame --target-namespace=default
 # blame with `diff`
 
 ```
-kubectl blame --target-namespace=default --format=diff
-+--------------------------+-----------+------------------+----------------------+----------------------------------------------------------------+
-| KEY                      | OPERATION | USER             | TIME                 | DIFF                                                           |
-+--------------------------+-----------+------------------+----------------------+----------------------------------------------------------------+
-| default/Deployment/nginx | UPDATE    | kubernetes-admin | 2022-08-13T22:08:53Z |        "deployment.kubernetes.io/revision": "1"                |
-|                          |           |                  |                      |      },                                                        |
-|                          |           |                  |                      |      "creationTimestamp": "2022-08-13T22:08:45Z",              |
-|                          |           |                  |                      |      "generation": 1,                                          |
-|                          |           |                  |                      |      "labels": {                                               |
-|                          |           |                  |                      | -      "app": "nginx"                                          |
-|                          |           |                  |                      | +      "app": "nginx123"                                       |
-|                          |           |                  |                      |      },                                                        |
-|                          |           |                  |                      |      "managedFields": [                                        |
-|                          |           |                  |                      |        0: {                                                    |
-|                          |           |                  |                      |          "apiVersion": "apps/v1",                              |
-|                          |           |                  |                      |          "fieldsType": "FieldsV1",                             |
-|                          |           |                  |                      |          "fieldsV1": {                                         |
-|                          |           |                  |                      |            "f:metadata": {                                     |
-|                          |           |                  |                      |              "f:labels": {                                     |
-|                          |           |                  |                      | -              ".": {                                          |
-|                          |           |                  |                      | -              },                                              |
-|                          |           |                  |                      | -              "f:app": {                                      |
-|                          |           |                  |                      | -              }                                               |
-|                          |           |                  |                      |              }                                                 |
-|                          |           |                  |                      |            },                                                  |
-|                          |           |                  |                      |            "f:spec": {                                         |
-|                          |           |                  |                      |              "f:progressDeadlineSeconds": {                    |
-|                          |           |                  |                      |              },                                                |
-|                          |           |                  |                      | [...]                                                          |
-|                          |           |                  |                      |          "manager": "kube-controller-manager",                 |
-|                          |           |                  |                      |          "operation": "Update",                                |
-|                          |           |                  |                      |          "subresource": "status",                              |
-|                          |           |                  |                      |          "time": "2022-08-13T22:08:47Z"                        |
-|                          |           |                  |                      |        }                                                       |
-|                          |           |                  |                      | +      2: {                                                    |
-|                          |           |                  |                      | +        "apiVersion": "apps/v1",                              |
-|                          |           |                  |                      | +        "fieldsType": "FieldsV1",                             |
-|                          |           |                  |                      | +        "fieldsV1": {                                         |
-|                          |           |                  |                      | +          "f:metadata": {                                     |
-|                          |           |                  |                      | +            "f:labels": {                                     |
-|                          |           |                  |                      | +              "f:app": {                                      |
-|                          |           |                  |                      | +              }                                               |
-|                          |           |                  |                      | +            }                                                 |
-|                          |           |                  |                      | +          }                                                   |
-|                          |           |                  |                      | +        },                                                    |
-|                          |           |                  |                      | +        "manager": "kubectl-edit",                            |
-|                          |           |                  |                      | +        "operation": "Update",                                |
-|                          |           |                  |                      | +        "time": "2022-08-13T22:08:53Z"                        |
-|                          |           |                  |                      | +      }                                                       |
-|                          |           |                  |                      |      ],                                                        |
-|                          |           |                  |                      |      "name": "nginx",                                          |
-|                          |           |                  |                      |      "namespace": "default",                                   |
-|                          |           |                  |                      |      "resourceVersion": "643643",                              |
-|                          |           |                  |                      |      "uid": "610b9e52-6612-417b-9dfc-4d4b1344aa61"             |
-|                          |           |                  |                      |                                                                |
-+--------------------------+-----------+------------------+----------------------+----------------------------------------------------------------+
+kubectl blame deployment -f diff
++---------------------------------------------------------------------------------+
+| 35m | default/deployment/nginx | UPDATE | kubernetes-admin                      |
+| groups:                                                                         |
+| - system:masters                                                                |
+| - system:authenticated                                                          |
+|                                                                                 |
++---------------------------------------------------------------------------------+
+|        "deployment.kubernetes.io/revision": "1",                                |
+|        "kubectl.kubernetes.io/last-applied-configuration": "{"apiVersion":"apps |
+| "                                                                               |
+|      },                                                                         |
+|      "creationTimestamp": "2022-09-15T20:09:52Z",                               |
+| -    "generation": 5,                                                           |
+| +    "generation": 6,                                                           |
+|      "managedFields": [                                                         |
+|        0: {                                                                     |
+|          "apiVersion": "apps/v1",                                               |
+|          "fieldsType": "FieldsV1",                                              |
+|          "fieldsV1": {                                                          |
+| [...]                                                                           |
+|              }                                                                  |
+|            },                                                                   |
+|            "f:spec": {                                                          |
+|              "f:progressDeadlineSeconds": {                                     |
+|              },                                                                 |
+| -            "f:replicas": {                                                    |
+| -            },                                                                 |
+|              "f:revisionHistoryLimit": {                                        |
+|              },                                                                 |
+|              "f:selector": {                                                    |
+|              },                                                                 |
+|              "f:strategy": {                                                    |
+| [...]                                                                           |
+|          "manager": "kube-controller-manager",                                  |
+|          "operation": "Update",                                                 |
+|          "subresource": "status",                                               |
+|          "time": "2022-09-17T19:37:54Z"                                         |
+|        }                                                                        |
+| +      2: {                                                                     |
+| +        "apiVersion": "apps/v1",                                               |
+| +        "fieldsType": "FieldsV1",                                              |
+| +        "fieldsV1": {                                                          |
+| +          "f:spec": {                                                          |
+| +            "f:replicas": {                                                    |
+| +            }                                                                  |
+| +          }                                                                    |
+| +        },                                                                     |
+| +        "manager": "kubectl-edit",                                             |
+| +        "operation": "Update",                                                 |
+| +        "time": "2022-09-17T19:37:59Z"                                         |
+| +      }                                                                        |
+|      ],                                                                         |
+|      "name": "nginx",                                                           |
+|      "namespace": "default",                                                    |
+|      "resourceVersion": "178315",                                               |
+|      "uid": "4dc72be3-0a50-4fdb-b2b6-b9f50fb60976"                              |
+|    },                                                                           |
+|    "spec": {                                                                    |
+|      "progressDeadlineSeconds": 600,                                            |
+| -    "replicas": 2,                                                             |
+| +    "replicas": 1,                                                             |
+|      "revisionHistoryLimit": 10,                                                |
+|      "selector": {                                                              |
+|        "matchLabels": {                                                         |
+|          "app": "nginx"                                                         |
+|        }                                                                        |
+|                                                                                 |
++---------------------------------------------------------------------------------+
 ```
 
 ### Custom Base Image

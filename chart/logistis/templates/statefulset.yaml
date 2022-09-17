@@ -51,17 +51,19 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
-            - name: http
+            - name: https
               containerPort: 10250
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /readyz
+              scheme: HTTPS
+              port: https
           readinessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /healthz
+              scheme: HTTPS
+              port: https
           volumeMounts:
             - name: tls
               mountPath: "/etc/admission-webhook/tls"

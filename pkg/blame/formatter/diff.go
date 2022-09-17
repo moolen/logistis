@@ -5,14 +5,43 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/moolen/logistis/pkg/store"
 	diff "github.com/yudai/gojsondiff"
 	"github.com/yudai/gojsondiff/formatter"
 )
 
-func DiffEvent(ev *store.Event) (string, error) {
+func formatDiff(t table.Writer, eventMap map[string][]*store.Event, debug bool) error {
+	for key, events := range eventMap {
+		for _, ev := range events {
+			formattedText := ""
+			df, err := formatEventDiff(ev)
+			if err != nil {
+				return fmt.Errorf("unable to diff events: %w", err)
+			}
+			formattedText = wrapDiffOutput(df, 5)
+
+			t.AppendRow([]interface{}{
+				fmt.Sprintf("%s | %s | %s | %s",
+					strconv.Itoa(int(time.Since(ev.Timestamp).Minutes()))+"m",
+					key,
+					ev.Operation,
+					formatUser(ev.UserInfo))})
+			t.AppendSeparator()
+			t.AppendRow([]interface{}{
+				formattedText})
+			t.AppendSeparator()
+		}
+	}
+	t.Render()
+	return nil
+}
+
+func formatEventDiff(ev *store.Event) (string, error) {
 	leftObj := ev.OldObject
 	rightObj := ev.Object
 
@@ -49,9 +78,15 @@ func DiffEvent(ev *store.Event) (string, error) {
 	return diffString, nil
 }
 
-func FormatDiff(in string, lookAround int) string {
+func wrapDiffOutput(in string, padding int) string {
 	out := bytes.NewBuffer(nil)
 	lines := strings.Split(in, "\n")
+
+	// lines are capped in width
+	maxWidth := 80
+
+	// mask stores the lines which are relevant to us
+	// we use it to calculate the padding
 	mask := make(map[int]bool)
 
 	// find lines starting with ansi escape
@@ -59,11 +94,11 @@ func FormatDiff(in string, lookAround int) string {
 		if strings.HasPrefix(line, "\x1b[") {
 			lower := 0
 			upper := len(lines) - 1
-			if i-lookAround > 0 {
-				lower = i - lookAround
+			if i-padding > 0 {
+				lower = i - padding
 			}
-			if i+lookAround < len(lines)-1 {
-				upper = i + lookAround
+			if i+padding < len(lines)-1 {
+				upper = i + padding
 			}
 			// mark range in mask
 			for i := lower; i <= upper; i++ {
@@ -83,7 +118,11 @@ func FormatDiff(in string, lookAround int) string {
 		if i > 1 && idx[i-1] < j-1 {
 			fmt.Fprintln(out, "[...]")
 		}
-		fmt.Fprintln(out, lines[j])
+		line := lines[j]
+		if len(line) > maxWidth {
+			line = line[0:maxWidth]
+		}
+		fmt.Fprintln(out, line)
 	}
 
 	return out.String()

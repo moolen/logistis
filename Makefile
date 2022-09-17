@@ -1,5 +1,6 @@
 GOOS=$(shell go env GOOS)
 GOARCH=$(shell go env GOARCH)
+KIND_NAME := kind
 
 # check if there are any existing `git tag` values
 ifeq ($(shell git tag),)
@@ -38,16 +39,16 @@ docker.build:
 
 .PHONY: docker.push.kind
 docker.push.kind:
-	kind load docker-image --name kind $(IMAGE_REPO):$(IMAGE_TAG)
+	kind load docker-image --name $(KIND_NAME) $(IMAGE_REPO):$(IMAGE_TAG)
 
 # ---- local development
 .PHONY: cluster
 cluster:
-	kind create cluster
+	kind create cluster --name $(KIND_NAME)
 
 .PHONY: delete-cluster
 delete-cluster:
-	kind delete cluster
+	kind delete cluster --name $(KIND_NAME)
 
 .PHONY: gen-tls
 gen-tls:

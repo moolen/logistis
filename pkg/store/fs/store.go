@@ -45,17 +45,12 @@ func (s *Store) List(namespace, kind, name string, maxHistory int) (map[string][
 		nsit := txn.NewIterator(opts)
 		defer nsit.Close()
 
-		// use prefix to speed up lookup
-		prefix := []byte("")
-		if namespace != "" {
-			prefix = []byte(namespace + "/")
-			if kind != "" {
-				prefix = append(prefix, []byte(kind+"/")...)
-				if name != "" {
-					prefix = append(prefix, []byte(name+"/")...)
-				}
-			}
+		prefix := []byte(namespace + "/" + kind)
+		if name != "" {
+			prefix = []byte(string(prefix) + "/" + name)
 		}
+
+		s.logger.Debugf("listing for prefix %s", string(prefix))
 
 		// track number of items we've fetched
 		// per key
@@ -67,9 +62,11 @@ func (s *Store) List(namespace, kind, name string, maxHistory int) (map[string][
 				historyMap[string(k)] = 0
 			}
 			// skip if prefix doesn't match
-			if !strings.HasPrefix(string(k), namespace) {
+			if !strings.HasPrefix(string(k), string(prefix)) {
+				s.logger.Debugf("prefix mismatch, skipping %s", string(k))
 				continue
 			}
+			s.logger.Debugf("fetching value %s", string(k))
 			err := item.Value(func(v []byte) error {
 				if historyMap[string(k)] >= maxHistory {
 					return nil

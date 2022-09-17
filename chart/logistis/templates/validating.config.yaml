@@ -13,11 +13,11 @@ webhooks:
         scope: "*"
     clientConfig:
       service:
-        namespace: {{ .Release.Namespace }}
+        namespace: "{{ .Release.Namespace }}"
         name: "{{ include "logistis.fullname" . }}"
-        path: /
+        path: /capture
         port: {{ .Values.service.port }}
-      caBundle: {{ .Values.tls.cert  }}
+      caBundle: "{{ .Values.tls.cert  }}"
     admissionReviewVersions: ["v1"]
     sideEffects: None
     timeoutSeconds: 2
