@@ -23,6 +23,9 @@ jobs:
   releases-matrix:
     name: Release Go Binary
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      id-token: write
     strategy:
       matrix:
         goos: [linux, windows, darwin]
@@ -48,6 +51,13 @@ jobs:
         docker pull ${{ env.IMAGE_REPO }}:main
         docker tag ${{ env.IMAGE_REPO }}:main ${{ env.IMAGE_REPO }}:${{ github.ref_name }}
         docker push ${{ env.IMAGE_REPO }}:${{ github.ref_name }}
+
+    - name: "sign image"
+      uses: ./.github/actions/sign
+      with:
+        image-name: ${{ env.IMAGE_REPO }}
+        image-tag: ${{ github.ref_name }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Release binary
       uses: wangyoucao577/go-release-action@v1.31
