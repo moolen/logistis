@@ -17,10 +17,9 @@ It allows you to:
 - [x] `kubectl blame` plugin to inspect changes
   - [x] overview on a cluster-global level: latest changes by namespace
   - [x] latest changes per-namespace
-* add `/lock` API to lock down namespaces or resources from particular users
-* distributed event storage 🤷
 - [x] make event limit configurable (currently max 100 events per resource)
-- add predicate functions to decide whether or not to capture a event
+- [x] add predicate functions to decide whether or not to capture a event
+- [ ] distributed event storage 🤷
 
 ### Quickstart
 

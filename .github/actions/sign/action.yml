@@ -56,10 +56,14 @@ runs:
 
     - name: Sign image
       shell: bash
+      env:
+        COSIGN_EXPERIMENTAL: "1"
       run: cosign sign -a GITHUB_ACTOR=${{ github.triggering_actor }} "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}"
 
     - name: Attach SBOM to image
       shell: bash
+      env:
+        COSIGN_EXPERIMENTAL: "1"
       run: |
         syft "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}" -o spdx-json=sbom-spdx.json
         cosign attest --predicate sbom-spdx.json --type spdx "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}"
@@ -72,11 +76,12 @@ runs:
         subcommand: container
         arguments: --repository "${{ inputs.image-name }}" --output-path provenance.att --digest "${{ steps.container_info.outputs.digest }}" --tags "${{ inputs.image-tag }}"
       env:
-        COSIGN_EXPERIMENTAL: "0"
         GITHUB_TOKEN: "${{ inputs.GITHUB_TOKEN }}"
 
     - name: Attach provenance
       shell: bash
+      env:
+        COSIGN_EXPERIMENTAL: "1"
       run: |
         jq '.predicate' provenance.att > provenance-predicate.att
         cosign attest --predicate provenance-predicate.att --type slsaprovenance "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}"

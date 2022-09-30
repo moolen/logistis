@@ -10,7 +10,6 @@ on:
 
 env:
   IMAGE_NAME: ghcr.io/moolen/logistis
-  COSIGN_EXPERIMENTAL: "1"
 
 jobs:
   docker:
@@ -69,15 +68,3 @@ jobs:
         image-name: ${{ env.IMAGE_NAME }}
         image-tag: ${{ needs.docker.outputs.image-tag }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  release:
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: docker
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          body: |
-            ## Container Image
-            ${{ env.IMAGE_REPO }}:${{ steps.version.outputs.version }}
