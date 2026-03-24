@@ -22,9 +22,9 @@ runs:
   steps:
 
     - name: Install cosign
-      uses: sigstore/cosign-installer@v2
+      uses: sigstore/cosign-installer@v3
       with:
-        cosign-release: v1.12.1
+        cosign-release: v3.0.5
 
     - name: Setup Go
       uses: actions/setup-go@v3
@@ -58,12 +58,14 @@ runs:
       shell: bash
       env:
         COSIGN_EXPERIMENTAL: "1"
+        COSIGN_YES: "true"
       run: cosign sign -a GITHUB_ACTOR=${{ github.triggering_actor }} "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}"
 
     - name: Attach SBOM to image
       shell: bash
       env:
         COSIGN_EXPERIMENTAL: "1"
+        COSIGN_YES: "true"
       run: |
         syft "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}" -o spdx-json=sbom-spdx.json
         cosign attest --predicate sbom-spdx.json --type spdx "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}"
@@ -82,6 +84,7 @@ runs:
       shell: bash
       env:
         COSIGN_EXPERIMENTAL: "1"
+        COSIGN_YES: "true"
       run: |
         jq '.predicate' provenance.att > provenance-predicate.att
         cosign attest --predicate provenance-predicate.att --type slsaprovenance "${{ inputs.image-name }}@${{ steps.container_info.outputs.digest }}"
