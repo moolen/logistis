@@ -1,4 +1,4 @@
-ARG BASEIMAGE=golang:999.0-alpine999
+ARG BASEIMAGE=golang:1.25.8
 ARG RUNIMAGE=alpine:3.20
 
 FROM $BASEIMAGE AS build
